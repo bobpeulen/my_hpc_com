@@ -24,16 +24,21 @@ print("Base imports")
 import oci
 import ads
 import ocifs
+import subprocess
 
 ## Fetch environment variables
+print("---------------------------------------------------------------")
 print("Fetch the environment variables")
+print("---------------------------------------------------------------")
 USER_NAME = os.environ.get("USER_NAME", "no_value")                ## input = user name in apex. Automatically passed. User name in apex is also main bucket name.
 ENTRY_POINT = os.environ.get("ENTRY_POINT", "no_value")            ## input = file name. Example: main.py or entrypoint.py
-FILES = os.environ.get("MAIN_BUCKET_NAME", "no_value")             ## input = list. Example: [example.csv, analyze_me.py, image_1.jpg, image_2.jpg]
+FILES = os.environ.get("FILES", "no_value")                        ## input = list. Example: [example.csv, analyze_me.py, image_1.jpg, image_2.jpg]
 
+print("---------------------------------------------------------------")
 print("Your user name is " + str(USER_NAME))
 print("Your main entrypoint file is " + str(ENTRY_POINT))
 print("Your additional files (if any) are " + str(FILES))
+print("---------------------------------------------------------------")
 
 #Get job run ocid
 JOB_RUN_OCID = os.environ.get('JOB_RUN_OCID', "UNDEFINED")
@@ -57,9 +62,28 @@ def get_files_from_input_bucket(full_input_bucket):
     
     #copy files
     all_files_in_bucket = fs.ls(full_input_bucket) #all files, including files that are not selected to run in experiment
+    print("---------------------------------------------------------------")
+    print("All available files are " + str(all_files_in_bucket))
+    print("---------------------------------------------------------------")
     
-    #fetch files
-    fs.get(full_input_bucket, "./" , recursive=True, refresh=True)  #store files in the bucket in "./" in Job Block storage
+    #fetch files that are selected to be included
+    print("---------------------------------------------------------------")
+    print("Fetch additional selected files")
+    print("---------------------------------------------------------------")
+    for filex in FILES:
+    
+        #full file location/name
+        full_file_location = full_input_bucket + filex
+        
+        fs.get(full_file_location, "./" , recursive=True, refresh=True)  #store files in the bucket in "./" in Job Block storage
+        
+    #get main entry_point file
+    print("---------------------------------------------------------------")
+    print("Fetch main entry point file")
+    print("---------------------------------------------------------------")
+    full_file_location_entry_point = full_input_bucket + ENTRY_POINT
+        
+    fs.get(full_file_location_entry_point, "./" , recursive=True, refresh=True)  #store files in the bucket in "./" in Job Block storage
     
     return all_files_in_bucket
 
@@ -70,4 +94,11 @@ all_files_in_bucket = get_files_from_input_bucket(full_input_bucket)
 ######################################################################## run entrypoint
 ########################################################################
 
-print("Load and run your entrypoint file")
+print("---------------------------------------------------------------")
+print("Load and run your entrypoint file " + ENTRY_POINT)
+print("---------------------------------------------------------------")
+
+cmd_entry_point = "python {0}".format(ENTRY_POINT)
+
+result_entry_point = subprocess.check_output([cmd_entry_point], shell=True)
+print(result_entry_point)
