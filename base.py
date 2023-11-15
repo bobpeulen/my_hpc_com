@@ -25,6 +25,7 @@ import oci
 import ads
 import ocifs
 import subprocess
+import os
 
 ## Fetch environment variables
 print("---------------------------------------------------------------")
